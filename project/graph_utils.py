@@ -6,24 +6,30 @@ from pathlib import Path
 
 CYCLIC_GRAPHS_PATH = Path(__file__).parent / "dot_cyclic_graphs"
 
+
 @dataclass
 class GraphData:
-    nodes_count:int
-    edges_count:int
-    attributes:Dict[str, Set[Any]]
+    nodes_count: int
+    edges_count: int
+    attributes: Dict[str, Set[Any]]
 
-def get_graph_data(name:str):
+
+def get_graph_data(name: str):
     analyzer = GraphAnalyzer(name)
     return GraphData(analyzer.get_nodes_cnt(), analyzer.get_edges_cnt(), analyzer.get_labels())
 
+
 def get_two_cyclic_graph(fst_cycle_nodes: int, snd_nodes_cnt: int, labels: tuple[str, str], file_path: str):
-        if fst_cycle_nodes <= 0 or snd_nodes_cnt <= 0:
-            raise ValueError("Error: get_two_cyclic_graph: Count of nodes should be positive number. Try to input other values.")
-        
-        networkx_graph = labeled_two_cycles_graph(n=fst_cycle_nodes, m=snd_nodes_cnt, labels=labels)
-        pydot_graph = nx.drawing.nx_pydot.to_pydot(networkx_graph)
-        CYCLIC_GRAPHS_PATH.mkdir(exist_ok=True)
-        pydot_graph.write_raw(CYCLIC_GRAPHS_PATH / file_path)
+    if fst_cycle_nodes <= 0 or snd_nodes_cnt <= 0:
+        raise ValueError(
+            "Error: get_two_cyclic_graph: Count of nodes should be positive number. Try to input other values.")
+
+    networkx_graph = labeled_two_cycles_graph(
+        n=fst_cycle_nodes, m=snd_nodes_cnt, labels=labels)
+    pydot_graph = nx.drawing.nx_pydot.to_pydot(networkx_graph)
+    CYCLIC_GRAPHS_PATH.mkdir(exist_ok=True)
+    pydot_graph.write_raw(CYCLIC_GRAPHS_PATH / file_path)
+
 
 class GraphAnalyzer:
     def __init__(self, name):
@@ -35,7 +41,6 @@ class GraphAnalyzer:
         else:
             path = Path(__file__).parent / "custom_graphs" / name
             self.graph = nx.read_edgelist(path, create_using=nx.MultiDiGraph)
-
 
     def get_nodes_cnt(self) -> int:
         return self.graph.number_of_nodes()
@@ -51,7 +56,7 @@ class GraphAnalyzer:
                     attributeMap[attrName] = set()
                 attributeMap[attrName].add(attrValue)
         return attributeMap
-    
+
     def get_labels(self):
         try:
             return (self.get_all_attributes())["label"]
