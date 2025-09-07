@@ -12,7 +12,7 @@ class GraphData:
 
 def get_graph_data(name:str):
     analyzer = GraphAnalyzer(name)
-    return GraphData(analyzer.get_nodes_count(), analyzer.get_edges_count(), analyzer.get_labels())
+    return GraphData(analyzer.get_nodes_cnt(), analyzer.get_edges_cnt(), analyzer.get_labels())
 
 def build_two_cycles_graph(cycle_size1: int, cycle_size2: int, data: tuple[str, str], file_path: str):
         networkx_graph = labeled_two_cycles_graph(cycle_size1, cycle_size2, labels=data)
@@ -27,7 +27,7 @@ class GraphAnalyzer:
 
         # for custom graphs written like edgelist (https://networkx.org/documentation/latest/reference/readwrite/edgelist.html)
         else:
-            path = Path(__file__) / "custom_graphs" / name
+            path = Path(__file__).parent / "custom_graphs" / name
             self.graph = nx.read_edgelist(path, create_using=nx.MultiDiGraph)
 
 
@@ -41,10 +41,13 @@ class GraphAnalyzer:
         attributeMap = {}
         for _, _, data in self.graph.edges(data=True):
             for attrName, attrValue in data.items():
-                if attrName not in self.attributeMap:
+                if attrName not in attributeMap:
                     attributeMap[attrName] = set()
                 attributeMap[attrName].add(attrValue)
         return attributeMap
     
     def get_labels(self):
-        return self.get_all_attributes["labels"]
+        try:
+            return (self.get_all_attributes())["label"]
+        except KeyError:
+            return {}
