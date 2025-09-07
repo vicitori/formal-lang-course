@@ -4,6 +4,8 @@ import networkx as nx
 from dataclasses import dataclass
 from pathlib import Path
 
+CYCLIC_GRAPHS_PATH = Path(__file__).parent / "dot_cyclic_graphs"
+
 @dataclass
 class GraphData:
     nodes_count:int
@@ -14,10 +16,14 @@ def get_graph_data(name:str):
     analyzer = GraphAnalyzer(name)
     return GraphData(analyzer.get_nodes_cnt(), analyzer.get_edges_cnt(), analyzer.get_labels())
 
-def build_two_cycles_graph(cycle_size1: int, cycle_size2: int, data: tuple[str, str], file_path: str):
-        networkx_graph = labeled_two_cycles_graph(cycle_size1, cycle_size2, labels=data)
+def get_two_cyclic_graph(fst_cycle_nodes: int, snd_nodes_cnt: int, labels: tuple[str, str], file_path: str):
+        if fst_cycle_nodes <= 0 or snd_nodes_cnt <= 0:
+            raise ValueError("Error: get_two_cyclic_graph: Count of nodes should be positive number. Try to input other values.")
+        
+        networkx_graph = labeled_two_cycles_graph(n=fst_cycle_nodes, m=snd_nodes_cnt, labels=labels)
         pydot_graph = nx.drawing.nx_pydot.to_pydot(networkx_graph)
-        pydot_graph.write_raw(file_path)
+        CYCLIC_GRAPHS_PATH.mkdir(exist_ok=True)
+        pydot_graph.write_raw(CYCLIC_GRAPHS_PATH / file_path)
 
 class GraphAnalyzer:
     def __init__(self, name):
