@@ -1,4 +1,4 @@
-from cfpq_data import *
+import cfpq_data
 from typing import Set, Dict, Any
 import networkx as nx
 from dataclasses import dataclass
@@ -29,7 +29,7 @@ def get_two_cyclic_graph(
             "Error: get_two_cyclic_graph: Count of nodes should be positive number. Try to input other values."
         )
 
-    networkx_graph = labeled_two_cycles_graph(
+    networkx_graph = cfpq_data.labeled_two_cycles_graph(
         n=fst_cycle_nodes, m=snd_nodes_cnt, labels=labels
     )
     pydot_graph = nx.drawing.nx_pydot.to_pydot(networkx_graph)
@@ -40,8 +40,8 @@ def get_two_cyclic_graph(
 class GraphAnalyzer:
     def __init__(self, name):
         if name in cfpq_data.DATASET:
-            path = download(name)
-            self.graph = graph_from_csv(path)
+            path = cfpq_data.download(name)
+            self.graph = cfpq_data.graph_from_csv(path)
 
         # for custom graphs written like edgelist (https://networkx.org/documentation/latest/reference/readwrite/edgelist.html)
         else:
