@@ -26,6 +26,7 @@ def test_nodes_cnt__graph_from_dataset():
 
 ############# GraphAnalyzer.edges_cnt #############
 
+
 def test_edges_cnt__empty_graph():
     analyzer = GraphAnalyzer("empty")
     assert analyzer.get_edges_cnt() == 0
@@ -49,6 +50,7 @@ def test_edges_cnt__graph_from_dataset():
 
 ######### GraphAnalyzer.get_all_attributes ########
 
+
 def test_get_all_attributes__no_attributes():
     analyzer = GraphAnalyzer("without_attributes")
     assert analyzer.get_all_attributes() == {}
@@ -56,11 +58,14 @@ def test_get_all_attributes__no_attributes():
 
 def test_get_all_attributes__two_attributes():
     analyzer = GraphAnalyzer("one_node_three_loops_has_attributes")
-    assert analyzer.get_all_attributes(
-    ) == {"animal": {"cat", "dog"}, "flower": {"rose"}}
+    assert analyzer.get_all_attributes() == {
+        "animal": {"cat", "dog"},
+        "flower": {"rose"},
+    }
 
 
 ############# GraphAnalyzer.get_labels ############
+
 
 def test_get_labels__has_attributes_no_labels():
     analyzer = GraphAnalyzer("one_node_three_loops_has_attributes")
@@ -74,13 +79,15 @@ def test_get_labels__has_not_only_labels():
 
 ################## get_graph_data #################
 
+
 def test_get_graph_data__empty_graph():
     assert get_graph_data("empty") == GraphData(0, 0, {})
 
 
 def test_get_graph_data__normal_graph_with_different_attributes():
     assert get_graph_data("has_attributes_including_labels") == GraphData(
-        9, 9, {"1", "2", "3", "4"})
+        9, 9, {"1", "2", "3", "4"}
+    )
 
 
 ############### get_two_cycles_graph ##############
