@@ -1,9 +1,9 @@
 import pytest
-import pydot
 import os
 import networkx as nx
 import project.graph_utils
 import shutil
+from networkx import is_isomorphic
 
 ############# GraphAnalyzer.nodes_cnt #############
 
@@ -92,45 +92,62 @@ def test_get_graph_data__normal_graph_with_different_attributes():
     ) == project.graph_utils.GraphData(9, 9, {"1", "2", "3", "4"})
 
 
-############### get_two_cycles_graph ##############
+############ write_dot_two_cycles_graph ###########
 
 TEST_CYCLIC_GRAPHS_PATH = (
     project.graph_utils.CYCLIC_GRAPHS_PATH.parent.parent / "tests" / "tmp"
 )
 
-# auxiliary for dot files reading
 
-
-def read_dot_graph(path) -> nx.MultiDiGraph:
-    graphs = pydot.graph_from_dot_file(str(path))
-    return nx.drawing.nx_pydot.from_pydot(graphs[0])
-
-
-def test_get_two_cycles_graph__file_creating():
+def test_write_dot_two_cycles_graph__file_creating():
     try:
         path = TEST_CYCLIC_GRAPHS_PATH / "empty.dot"
         TEST_CYCLIC_GRAPHS_PATH.mkdir(exist_ok=True)
-        project.graph_utils.get_two_cyclic_graph(3, 3, ("a", "b"), path)
+        project.graph_utils.write_dot_two_cycles_graph(3, 3, ("a", "b"), path)
         assert os.path.isfile(path)
     finally:
         if TEST_CYCLIC_GRAPHS_PATH.exists():
             shutil.rmtree(TEST_CYCLIC_GRAPHS_PATH)
 
 
-def test_get_two_cycles_graph__invalid_nodes():
+def test_write_dot_two_cycles_graph__invalid_nodes():
     path = TEST_CYCLIC_GRAPHS_PATH / "empty.dot"
     TEST_CYCLIC_GRAPHS_PATH.mkdir(exist_ok=True)
 
     try:
         with pytest.raises(ValueError):
-            project.graph_utils.get_two_cyclic_graph(0, 0, ("a", "b"), path)
+            project.graph_utils.write_dot_two_cycles_graph(0, 0, ("a", "b"), path)
 
         with pytest.raises(ValueError):
-            project.graph_utils.get_two_cyclic_graph(5, 0, ("a", "b"), path)
+            project.graph_utils.write_dot_two_cycles_graph(5, 0, ("a", "b"), path)
 
         with pytest.raises(ValueError):
-            project.graph_utils.get_two_cyclic_graph(-5, 0, ("a", "b"), path)
+            project.graph_utils.write_dot_two_cycles_graph(-5, 0, ("a", "b"), path)
 
+    finally:
+        if TEST_CYCLIC_GRAPHS_PATH.exists():
+            shutil.rmtree(TEST_CYCLIC_GRAPHS_PATH)
+
+
+def test_write_two_cycles_graph_dot__file_content():
+    try:
+        expected_path = project.graph_utils.CYCLIC_GRAPHS_PATH / "example_graph.dot"
+        test_path = TEST_CYCLIC_GRAPHS_PATH / "test_graph.dot"
+        TEST_CYCLIC_GRAPHS_PATH.mkdir(exist_ok=True)
+
+        project.graph_utils.write_dot_two_cycles_graph(
+            3, 5, ("three", "five"), test_path
+        )
+
+        expected_graph = nx.drawing.nx_pydot.read_dot(expected_path)
+        test_graph = nx.drawing.nx_pydot.read_dot(test_path)
+
+        assert is_isomorphic(
+            expected_graph,
+            test_graph,
+            node_match=lambda n1, n2: dict(n1) == dict(n2),
+            edge_match=lambda e1, e2: dict(e1) == dict(e2),
+        )
     finally:
         if TEST_CYCLIC_GRAPHS_PATH.exists():
             shutil.rmtree(TEST_CYCLIC_GRAPHS_PATH)
