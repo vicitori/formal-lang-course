@@ -4,7 +4,7 @@ import networkx as nx
 from dataclasses import dataclass
 from pathlib import Path
 
-CYCLIC_GRAPHS_PATH = Path(__file__).parent / "dot_cyclic_graphs"
+CYCLIC_GRAPHS_PATH = Path(__file__).parent / "two_cycles_graphs"
 
 
 @dataclass
@@ -21,12 +21,12 @@ def get_graph_data(name: str):
     )
 
 
-def get_two_cyclic_graph(
+def write_dot_two_cycles_graph(
     fst_cycle_nodes: int, snd_nodes_cnt: int, labels: tuple[str, str], file_path: str
 ):
     if fst_cycle_nodes <= 0 or snd_nodes_cnt <= 0:
         raise ValueError(
-            "Error: get_two_cyclic_graph: Count of nodes should be positive number. Try to input other values."
+            "Error: write_dot_two_cycles_graph: Count of nodes should be positive number. Try to input other values."
         )
 
     networkx_graph = cfpq_data.labeled_two_cycles_graph(
