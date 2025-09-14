@@ -113,8 +113,8 @@ def test_graph_to_nfa__accepts_and_rejects(
             set(),
             set(),
             {
-                "start_states": {0, 1, 2, 3, 4, 5, 6, 7, 8},
-                "final_states": {0, 1, 2, 3, 4, 5, 6, 7, 8},
+                "start_states": {str(i) for i in range(0, 9)},
+                "final_states": {str(i) for i in range(0, 9)},
             },
         ),
     ],
@@ -125,5 +125,8 @@ def test_graph_to_nfa__dot_two_cycle_graph(
     graph = nx.nx_pydot.read_dot(CYCLIC_GRAPHS_PATH / "example_graph.dot")
     nfa = graph_to_nfa(graph, start_states, final_states)
 
-    assert nfa.start_states == expected_properties["start_states"]
-    assert nfa.final_states == expected_properties["final_states"]
+    num_start_states = {state.value for state in nfa.start_states}
+    num_final_states = {state.value for state in nfa.final_states}
+
+    assert num_start_states == expected_properties["start_states"]
+    assert num_final_states == expected_properties["final_states"]
