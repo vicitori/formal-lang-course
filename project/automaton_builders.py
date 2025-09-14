@@ -23,8 +23,7 @@ def graph_to_nfa(
 
     graph_nodes = set()
     if not start_states or not final_states:
-        for node, _ in graph.nodes:
-            graph_nodes.add(node)
+        graph_nodes = set(graph.nodes)
 
     start_set = start_states if len(start_states) != 0 else graph_nodes
     final_set = final_states if len(final_states) != 0 else graph_nodes
