@@ -7,7 +7,7 @@ from pyformlang.finite_automaton import (
     Symbol,
 )
 
-from automaton_builders import (regex_to_dfa, graph_to_nfa)
+from project.automaton_builders import regex_to_dfa, graph_to_nfa
 
 
 class AdjacencyMatrixFA:
@@ -24,19 +24,15 @@ class AdjacencyMatrixFA:
 
         self.state_cnt = len(automaton.states)
 
-        self.id_of_state = {state: id for id,
-                            state in enumerate(automaton.states)}
-        self.state_of_id = {id: state for id,
-                            state in enumerate(automaton.states)}
+        self.id_of_state = {state: id for id, state in enumerate(automaton.states)}
+        self.state_of_id = {id: state for id, state in enumerate(automaton.states)}
 
-        start_ids = {
-            self.id_of_state[state] for state in automaton.start_states}
+        start_ids = {self.id_of_state[state] for state in automaton.start_states}
         self.start_vector = np.zeros(self.state_cnt, dtype=bool)
         for id in start_ids:
             self.start_vector[id] = True
 
-        final_ids = {
-            self.id_of_state[state] for state in automaton.final_states}
+        final_ids = {self.id_of_state[state] for state in automaton.final_states}
         self.final_vector = np.zeros(self.state_cnt, dtype=bool)
         for id in final_ids:
             self.final_vector[id] = True
@@ -50,16 +46,20 @@ class AdjacencyMatrixFA:
             symbol = edge[2]
 
             if symbol is not None:
-                transitions_by_symbol.setdefault(
-                    symbol, []).append((from_state, to_state))
+                transitions_by_symbol.setdefault(symbol, []).append(
+                    (from_state, to_state)
+                )
 
-        for symbol in transitions_by_symbol.keys:
+        for symbol in transitions_by_symbol.keys():
             transitions = transitions_by_symbol[symbol]
 
             rows = np.fromiter(
-                (self.id_of_state[from_state] for from_state, _ in transitions), dtype=int)
+                (self.id_of_state[from_state] for from_state, _ in transitions),
+                dtype=int,
+            )
             cols = np.fromiter(
-                (self.id_of_state[to_state] for _, to_state in transitions), dtype=int)
+                (self.id_of_state[to_state] for _, to_state in transitions), dtype=int
+            )
             data = np.ones(len(transitions), dtype=bool)
 
             matrix = sparse.csr_matrix(
@@ -73,9 +73,7 @@ class AdjacencyMatrixFA:
         current_vector = self.start_vector
         for symbol in word:
             # all reachable states from the starting ones
-            current_vector = (
-                current_vector @ self.boolean_decomp_by_symbol[symbol]
-            )
+            current_vector = current_vector @ self.boolean_decomp_by_symbol[symbol]
         return np.any(current_vector & self.final_vector)
 
     def is_empty(self) -> bool:
@@ -88,8 +86,10 @@ class AdjacencyMatrixFA:
     def get_transitive_closure(self):
         # initialized identity matrix
         transitive_closure = sparse.csr_matrix(
-            (np.ones(self.state_cnt, dtype=bool),
-             (range(self.state_cnt), range(self.state_cnt)),),
+            (
+                np.ones(self.state_cnt, dtype=bool),
+                (range(self.state_cnt), range(self.state_cnt)),
+            ),
             shape=(self.state_cnt, self.state_cnt),
         )
 
@@ -120,21 +120,23 @@ def intersect_automata(
             automaton2.boolean_decomp_by_symbol[symbol],
         )
 
-    start_ids = [id1 * size2 + id2
-                 for id1, data1 in enumerate(automaton1.start_vector)
-                 if data1
-                 for id2, data2 in enumerate(automaton2.start_vector)
-                 if data2
-                 ]
+    start_ids = [
+        id1 * size2 + id2
+        for id1, data1 in enumerate(automaton1.start_vector)
+        if data1
+        for id2, data2 in enumerate(automaton2.start_vector)
+        if data2
+    ]
     start_vector = np.zeros(kron_matrix_size, dtype=bool)
     start_vector[start_ids] = True
 
-    final_ids = [id1 * size2 + id2
-                 for id1, data1 in enumerate(automaton1.final_vector)
-                 if data1
-                 for id2, data2 in enumerate(automaton2.final_vector)
-                 if data2
-                 ]
+    final_ids = [
+        id1 * size2 + id2
+        for id1, data1 in enumerate(automaton1.final_vector)
+        if data1
+        for id2, data2 in enumerate(automaton2.final_vector)
+        if data2
+    ]
     final_vector = np.zeros(kron_matrix_size, dtype=bool)
     final_vector[final_ids] = True
 
