@@ -1,13 +1,10 @@
 import numpy as np
-import networkx as nx
 from typing import Iterable
 from scipy import sparse
 from pyformlang.finite_automaton import (
     NondeterministicFiniteAutomaton,
     Symbol,
 )
-
-from project.automaton_builders import regex_to_dfa, graph_to_nfa
 
 
 class AdjacencyMatrixFA:
@@ -156,29 +153,3 @@ def intersect_automata(
     intersected_fa.state_of_id = state_of_id
 
     return intersected_fa
-
-
-def tensor_based_rpq(
-    regex: str, graph: nx.MultiDiGraph, start_nodes: set[int], final_nodes: set[int]
-) -> set[tuple[int, int]]:
-    regex_dfa = regex_to_dfa(regex)
-    regex_fa = AdjacencyMatrixFA(regex_dfa)
-
-    graph_nfa = graph_to_nfa(graph, start_nodes, final_nodes)
-    graph_fa = AdjacencyMatrixFA(graph_nfa)
-
-    intersected_fa = intersect_automata(regex_fa, graph_fa)
-    transitive_closure = intersected_fa.get_transitive_closure()
-
-    start_ids = np.where(intersected_fa.start_vector)[0]
-    final_ids = np.where(intersected_fa.final_vector)[0]
-
-    result = set()
-    for start_id in start_ids:
-        for final_id in final_ids:
-            if transitive_closure[start_id, final_id]:
-                start_state = intersected_fa.state_of_id[start_id]
-                final_state = intersected_fa.state_of_id[final_id]
-                result.add((start_state[1], final_state[1]))
-
-    return result
