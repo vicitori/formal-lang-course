@@ -1,13 +1,10 @@
 import numpy as np
-import networkx as nx
 from typing import Iterable
 from scipy import sparse
 from pyformlang.finite_automaton import (
     NondeterministicFiniteAutomaton,
     Symbol,
 )
-
-from project.automaton_builders import regex_to_dfa, graph_to_nfa
 
 
 class AdjacencyMatrixFA:
@@ -120,68 +117,39 @@ def intersect_automata(
             automaton2.boolean_decomp_by_symbol[symbol],
         )
 
-    start_ids = [
-        id1 * size2 + id2
-        for id1, data1 in enumerate(automaton1.start_vector)
-        if data1
-        for id2, data2 in enumerate(automaton2.start_vector)
-        if data2
-    ]
-    start_vector = np.zeros(kron_matrix_size, dtype=bool)
-    start_vector[start_ids] = True
+    id_of_state = {}
+    state_of_id = {}
+    composite_states = []
+    for id_state1 in range(size1):
+        state1 = automaton1.state_of_id[id_state1]
+        for id_state2 in range(size2):
+            state2 = automaton2.state_of_id[id_state2]
+            composite_states.append((state1, state2))
 
-    final_ids = [
-        id1 * size2 + id2
-        for id1, data1 in enumerate(automaton1.final_vector)
-        if data1
-        for id2, data2 in enumerate(automaton2.final_vector)
-        if data2
-    ]
+    for global_id, composite_state in enumerate(composite_states):
+        id_of_state[composite_state] = global_id
+        state_of_id[global_id] = composite_state
+
+    start_vector = np.zeros(kron_matrix_size, dtype=bool)
     final_vector = np.zeros(kron_matrix_size, dtype=bool)
-    final_vector[final_ids] = True
+
+    for global_id, composite_state in state_of_id.items():
+        state1, state2 = composite_state
+        id_state1 = automaton1.id_of_state[state1]
+        id_state2 = automaton2.id_of_state[state2]
+
+        if automaton1.start_vector[id_state1] and automaton2.start_vector[id_state2]:
+            start_vector[global_id] = True
+
+        if automaton1.final_vector[id_state1] and automaton2.final_vector[id_state2]:
+            final_vector[global_id] = True
 
     intersected_fa = AdjacencyMatrixFA()
-
     intersected_fa.state_cnt = kron_matrix_size
     intersected_fa.boolean_decomp_by_symbol = kron_boolean_decomp_by_symbol
     intersected_fa.start_vector = start_vector
     intersected_fa.final_vector = final_vector
-    intersected_fa.id_of_state = {id: id for id in range(kron_matrix_size)}
-    intersected_fa.state_of_id = {id: id for id in range(kron_matrix_size)}
+    intersected_fa.id_of_state = id_of_state
+    intersected_fa.state_of_id = state_of_id
 
     return intersected_fa
-
-
-def tensor_based_rpq(
-    regex: str, graph: nx.MultiDiGraph, start_nodes: set[int], final_nodes: set[int]
-) -> set[tuple[int, int]]:
-    regex_dfa = regex_to_dfa(regex)
-    regex_fa = AdjacencyMatrixFA(regex_dfa)
-
-    graph_nfa = graph_to_nfa(graph, start_nodes, final_nodes)
-    graph_fa = AdjacencyMatrixFA(graph_nfa)
-
-    intersected_fa = intersect_automata(graph_fa, regex_fa)
-    transitive_closure = intersected_fa.get_transitive_closure()
-
-    graph_start_ids = np.where(graph_fa.start_vector)[0]
-    graph_final_ids = np.where(graph_fa.final_vector)[0]
-
-    regex_start_ids = np.where(regex_fa.start_vector)[0]
-    regex_final_ids = np.where(regex_fa.final_vector)[0]
-
-    result = set()
-    for g_start in graph_start_ids:
-        for r_start in regex_start_ids:
-            intersect_start = g_start * regex_fa.state_cnt + r_start
-
-            for g_final in graph_final_ids:
-                for r_final in regex_final_ids:
-                    intersect_final = g_final * regex_fa.state_cnt + r_final
-
-                    if transitive_closure[intersect_start, intersect_final]:
-                        start_state = graph_fa.state_of_id[g_start]
-                        final_state = graph_fa.state_of_id[g_final]
-                        result.add((start_state, final_state))
-
-    return result
