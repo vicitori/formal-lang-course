@@ -11,7 +11,7 @@ def tensor_based_rpq(
     graph: nx.MultiDiGraph,
     start_nodes: set[int],
     final_nodes: set[int],
-    matrix_class=sparse.csr_matrix,
+    matrix_class=sparse.coo_matrix,
 ) -> set[tuple[int, int]]:
     regex_dfa = regex_to_dfa(regex)
     regex_fa = AdjacencyMatrixFA(regex_dfa, matrix_class=matrix_class)
@@ -41,7 +41,7 @@ def ms_bfs_based_rpq(
     graph: nx.MultiDiGraph,
     start_nodes: set[int],
     final_nodes: set[int],
-    matrix_class=sparse.csr_matrix,
+    matrix_class=sparse.csc_matrix,
 ) -> set[tuple[int, int]]:
     regex_dfa = regex_to_dfa(regex)
     regex_fa = AdjacencyMatrixFA(regex_dfa, matrix_class=matrix_class)
