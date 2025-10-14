@@ -8,13 +8,18 @@ from pyformlang.finite_automaton import (
 
 
 class AdjacencyMatrixFA:
-    def __init__(self, automaton: NondeterministicFiniteAutomaton = None):
+    def __init__(
+        self,
+        automaton: NondeterministicFiniteAutomaton = None,
+        matrix_class=sparse.csr_matrix,
+    ):
         self.boolean_decomp_by_symbol = {}
         self.start_vector = np.zeros(0, dtype=bool)
         self.final_vector = np.zeros(0, dtype=bool)
         self.id_of_state = {}
         self.state_of_id = {}
         self.state_cnt = 0
+        self.matrix_class = matrix_class
 
         if automaton is None:
             return
@@ -59,12 +64,20 @@ class AdjacencyMatrixFA:
             )
             data = np.ones(len(transitions), dtype=bool)
 
-            matrix = sparse.csr_matrix(
-                (data, (rows, cols)),
-                shape=(self.state_cnt, self.state_cnt),
-            )
+            matrix = self.create_matrix(data, rows, cols)
 
             self.boolean_decomp_by_symbol[symbol] = matrix
+
+    def create_matrix(self, data, rows, cols):
+        if self.matrix_class in [sparse.lil_matrix, sparse.dok_matrix]:
+            lil_mat = self.matrix_class((self.state_cnt, self.state_cnt), dtype=bool)
+            for i, j, val in zip(rows, cols, data):
+                lil_mat[i, j] = val
+            return lil_mat
+        else:
+            return self.matrix_class(
+                (data, (rows, cols)), shape=(self.state_cnt, self.state_cnt)
+            )
 
     def accepts(self, word: Iterable[Symbol]) -> bool:
         current_vector = self.start_vector
@@ -82,12 +95,9 @@ class AdjacencyMatrixFA:
 
     def get_transitive_closure(self):
         # initialized identity matrix
-        transitive_closure = sparse.csr_matrix(
-            (
-                np.ones(self.state_cnt, dtype=bool),
-                (range(self.state_cnt), range(self.state_cnt)),
-            ),
-            shape=(self.state_cnt, self.state_cnt),
+        matrix_format = self.matrix_class.format.fget(self.matrix_class)
+        transitive_closure = sparse.identity(
+            self.state_cnt, dtype=bool, format=matrix_format
         )
 
         for matrix in self.boolean_decomp_by_symbol.values():
@@ -145,6 +155,9 @@ def intersect_automata(
             final_vector[global_id] = True
 
     intersected_fa = AdjacencyMatrixFA()
+    if automaton1.matrix_class == automaton2.matrix_class:
+        intersected_fa.matrix_class = automaton1.matrix_class
+
     intersected_fa.state_cnt = kron_matrix_size
     intersected_fa.boolean_decomp_by_symbol = kron_boolean_decomp_by_symbol
     intersected_fa.start_vector = start_vector
