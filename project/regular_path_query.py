@@ -7,13 +7,17 @@ from project.automaton_builders import regex_to_dfa, graph_to_nfa
 
 
 def tensor_based_rpq(
-    regex: str, graph: nx.MultiDiGraph, start_nodes: set[int], final_nodes: set[int]
+    regex: str,
+    graph: nx.MultiDiGraph,
+    start_nodes: set[int],
+    final_nodes: set[int],
+    matrix_class=sparse.coo_matrix,
 ) -> set[tuple[int, int]]:
     regex_dfa = regex_to_dfa(regex)
-    regex_fa = AdjacencyMatrixFA(regex_dfa)
+    regex_fa = AdjacencyMatrixFA(regex_dfa, matrix_class=matrix_class)
 
     graph_nfa = graph_to_nfa(graph, start_nodes, final_nodes)
-    graph_fa = AdjacencyMatrixFA(graph_nfa)
+    graph_fa = AdjacencyMatrixFA(graph_nfa, matrix_class=matrix_class)
 
     intersected_fa = intersect_automata(regex_fa, graph_fa)
     transitive_closure = intersected_fa.get_transitive_closure()
@@ -33,13 +37,17 @@ def tensor_based_rpq(
 
 
 def ms_bfs_based_rpq(
-    regex: str, graph: nx.MultiDiGraph, start_nodes: set[int], final_nodes: set[int]
+    regex: str,
+    graph: nx.MultiDiGraph,
+    start_nodes: set[int],
+    final_nodes: set[int],
+    matrix_class=sparse.csc_matrix,
 ) -> set[tuple[int, int]]:
     regex_dfa = regex_to_dfa(regex)
-    regex_fa = AdjacencyMatrixFA(regex_dfa)
+    regex_fa = AdjacencyMatrixFA(regex_dfa, matrix_class=matrix_class)
 
     graph_nfa = graph_to_nfa(graph, start_nodes, final_nodes)
-    graph_fa = AdjacencyMatrixFA(graph_nfa)
+    graph_fa = AdjacencyMatrixFA(graph_nfa, matrix_class=matrix_class)
 
     dfa_size = regex_fa.state_cnt
     nfa_size = graph_fa.state_cnt
@@ -60,10 +68,9 @@ def ms_bfs_based_rpq(
 
     nfa_matrices = graph_fa.boolean_decomp_by_symbol
 
-    start_front = sparse.csr_matrix((dfa_size * block_count, nfa_size), dtype=bool)
-    for block_num, nfa_start in enumerate(nfa_starts_ids):
-        start_front[dfa_start_id + dfa_size * block_num, nfa_start] = True
-
+    start_front = init_start_front(
+        matrix_class, dfa_start_id, dfa_size, block_count, nfa_starts_ids, nfa_size
+    )
     front = start_front
     visited = sparse.csr_matrix((dfa_size * block_count, nfa_size), dtype=bool)
 
@@ -106,3 +113,24 @@ def ms_bfs_based_rpq(
                 result.add((start, end))
 
     return result
+
+
+def init_start_front(
+    matrix_class, dfa_start_id, dfa_size, block_count, nfa_starts_ids, nfa_size
+):
+    if matrix_class in [sparse.csr_matrix, sparse.lil_matrix, sparse.dok_matrix]:
+        start_front = matrix_class((dfa_size * block_count, nfa_size), dtype=bool)
+        for block_num, nfa_start in enumerate(nfa_starts_ids):
+            row = dfa_start_id + dfa_size * block_num
+            start_front[row, nfa_start] = True
+        return start_front
+    else:
+        rows = [
+            dfa_start_id + dfa_size * block_num
+            for block_num, _ in enumerate(nfa_starts_ids)
+        ]
+        cols = list(nfa_starts_ids)
+        data = [True] * len(rows)
+        return matrix_class(
+            (data, (rows, cols)), shape=(dfa_size * block_count, nfa_size), dtype=bool
+        )

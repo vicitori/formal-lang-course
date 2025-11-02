@@ -21,6 +21,11 @@ def get_graph_data(name: str):
     )
 
 
+def get_graph_by_name(name: str):
+    analyzer = GraphAnalyzer(name)
+    return analyzer.get_graph()
+
+
 def write_dot_two_cycles_graph(
     fst_cycle_nodes: int, snd_nodes_cnt: int, labels: tuple[str, str], file_path: str
 ):
@@ -68,3 +73,6 @@ class GraphAnalyzer:
             return (self.get_all_attributes())["label"]
         except KeyError:
             return {}
+
+    def get_graph(self):
+        return self.graph
