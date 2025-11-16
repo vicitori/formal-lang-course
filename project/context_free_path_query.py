@@ -1,4 +1,3 @@
-import pyformlang
 from pyformlang.cfg import CFG, Terminal
 import networkx as nx
 from pyformlang.rsa import RecursiveAutomaton
