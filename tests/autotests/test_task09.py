@@ -19,7 +19,7 @@ try:
         hellings_based_cfpq,
         matrix_based_cfpq,
         tensor_based_cfpq,
-        gll_based_cfpq
+        gll_based_cfpq,
     )
     from project.rsm_utils import cfg_to_rsm, ebnf_to_rsm
 except ImportError:
