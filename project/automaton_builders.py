@@ -8,6 +8,7 @@ from pyformlang.finite_automaton import (
 )
 
 import networkx as nx
+from pyformlang.rsa import RecursiveAutomaton
 
 
 def regex_to_dfa(regex: str) -> DeterministicFiniteAutomaton:
@@ -34,3 +35,29 @@ def graph_to_nfa(
         enfa.add_final_state(State(state))
 
     return enfa.remove_epsilon_transitions()
+
+
+def rsm_to_nfa(rsm: RecursiveAutomaton) -> NondeterministicFiniteAutomaton:
+    result_nfa = NondeterministicFiniteAutomaton()
+    for automaton_name in rsm.labels:
+        automaton = rsm.boxes[automaton_name].dfa
+        transition_map = automaton.to_dict()
+
+        initial_nfa_state = (automaton.start_state, automaton_name)
+        result_nfa.add_start_state(initial_nfa_state)
+
+        for accepting_state in automaton.final_states:
+            final_nfa_state = (accepting_state, automaton_name)
+            result_nfa.add_final_state(final_nfa_state)
+
+        for origin_state in transition_map:
+            for transition_symbol, destination_state in transition_map[
+                origin_state
+            ].items():
+                nfa_origin = (origin_state, automaton_name)
+                nfa_destination = (destination_state, automaton_name)
+                result_nfa.add_transition(
+                    nfa_origin, transition_symbol, nfa_destination
+                )
+
+    return result_nfa
